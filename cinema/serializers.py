@@ -42,16 +42,23 @@ class TicketSerializer(serializers.ModelSerializer):
         fields = ("id", "row", "seat", "movie_session")
 
     def validate(self, data):
-        movie_session = data["movie_session"]
-        row = data["row"]
-        seat = data["seat"]
+        movie_session = data.get("movie_session")
+        if not movie_session:
+            raise serializers.ValidationError(
+                "Необходимо указать сеанс фильма."
+            )
+        row = data.get("row")
+        seat = data.get("seat")
+        # Проверка на занятость места
         if Ticket.objects.filter(
             movie_session=movie_session, row=row, seat=seat
         ).exists():
             raise serializers.ValidationError("Это место уже занято.")
+        # Проверка допустимости номера ряда
         if not (1 <= row <= movie_session.cinema_hall.rows):
             raise serializers.ValidationError("Недопустимый номер ряда.")
-        if not (1 <= seat <= movie_session.cinema_hалл.seats_in_row):
+        # Проверка допустимости номера места
+        if not (1 <= seat <= movie_session.cinema_hall.seats_in_row):
             raise serializers.ValidationError("Недопустимый номер места.")
         return data
 

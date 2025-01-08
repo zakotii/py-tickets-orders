@@ -2,6 +2,7 @@ from django.db.models import Q
 from django.db.models import OuterRef, Subquery
 from django_filters import rest_framework as filters
 from cinema.models import MovieSession, Movie, Actor
+import logging
 
 
 class MovieSessionFilter(filters.FilterSet):
@@ -11,6 +12,9 @@ class MovieSessionFilter(filters.FilterSet):
     class Meta:
         model = MovieSession
         fields = ["date", "movie"]
+
+
+logger = logging.getLogger(__name__)
 
 
 class MovieFilter(filters.FilterSet):
@@ -39,6 +43,8 @@ class MovieFilter(filters.FilterSet):
                 if id.strip().isdigit()
             ]
             return queryset.filter(actors__id__in=actor_ids)
-        except ValueError:
-            # Если передан некорректный ID
+        except ValueError as e:
+            # Логируем ошибку для отладки
+            logger.warning(f"Invalid actor ID input: '{value}'. Error: {e}")
+            # Возвращаем пустой queryset, если данные некорректны
             return queryset.none()
